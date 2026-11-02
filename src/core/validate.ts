@@ -6,6 +6,7 @@
  */
 import type { GuitarSpec, SpecIssue } from './spec';
 import { checkSchema } from './spec';
+import { layoutRules } from './rules-layout';
 
 export type Rule = (spec: GuitarSpec) => SpecIssue[];
 
@@ -21,7 +22,7 @@ const baseRules: Rule[] = [
 ];
 
 /** Registry; other modules append their rules here (keep rules pure and fast). */
-export const RULES: Rule[] = [...baseRules];
+export const RULES: Rule[] = [...baseRules, ...layoutRules];
 
 export function validateSpec(input: unknown): { spec: GuitarSpec | null; issues: SpecIssue[] } {
   const { spec, issues } = checkSchema(input);
