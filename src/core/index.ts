@@ -8,3 +8,5 @@ export * from './layout';
 export * from './template';
 export * from './validate';
 export { TEMPLATES, templateById } from './templates';
+export * from './headstock';
+export * from './body';
