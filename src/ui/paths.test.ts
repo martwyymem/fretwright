@@ -28,11 +28,12 @@ describe('setAt', () => {
     expect(next.body).toBe(DEFAULT_SPEC.body);
   });
   it('writes into arrays and keeps them arrays', () => {
-    const next = setAt(DEFAULT_SPEC, 'body.pickups.0.angle', -5);
+    const before = DEFAULT_SPEC.body.pickups[0]!.angle;
+    const next = setAt(DEFAULT_SPEC, 'body.pickups.0.angle', 5.5);
     expect(Array.isArray(next.body.pickups)).toBe(true);
-    expect(next.body.pickups[0]!.angle).toBe(-5);
+    expect(next.body.pickups[0]!.angle).toBe(5.5);
     expect(next.body.pickups[1]).toBe(DEFAULT_SPEC.body.pickups[1]);
-    expect(DEFAULT_SPEC.body.pickups[0]!.angle).toBe(8);
+    expect(DEFAULT_SPEC.body.pickups[0]!.angle).toBe(before);
   });
   it('returns the same object when the value is unchanged', () => {
     expect(setAt(DEFAULT_SPEC, 'scale.bass', DEFAULT_SPEC.scale.bass)).toBe(DEFAULT_SPEC);
