@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 /** The stepped parameter panel (left column). */
 import type { DisplayUnit, GuitarSpec } from '../core';
-import { gaugeToMm, inToMm } from '../core';
+import { gaugeToMm, importOutlineFromSvg, inToMm } from '../core';
+import { useState, type ChangeEvent } from 'react';
 import {
   FIELDS,
   PICKUP_TYPES,
@@ -332,6 +333,53 @@ function PickupsEditor({ ctx, messages, help }: { ctx: Ctx; messages: UiIssue[];
 }
 
 // ---------------------------------------------------------------------------
+// Custom outline import (body / headstock)
+// ---------------------------------------------------------------------------
+
+const round3 = (x: number) => Math.round(x * 1000) / 1000;
+
+/**
+ * SVG file picker for a custom outline. The SVG is drawn with the attachment end on the LEFT
+ * (body: neck end; headstock: nut end, tip pointing right). The result is stored in the local
+ * frame of `customOutline`: body — origin at the neck-pocket anchor, +x toward the tail;
+ * headstock — origin at the nut centre, +x toward the tip; +y = up in the drawing. It is scaled so
+ * its overall length equals the current body / headstock length (re-import after changing it).
+ */
+export function OutlineImport({ ctx, target }: { ctx: Ctx; target: 'body' | 'headstock' }) {
+  const [warnings, setWarnings] = useState<string[]>([]);
+  const id = `f-${target}-outline-import`;
+  const current = target === 'body' ? ctx.spec.body.customOutline : ctx.spec.headstock.customOutline;
+  const length = target === 'body' ? ctx.spec.body.length : ctx.spec.headstock.length;
+  const onFile = async (e: ChangeEvent<HTMLInputElement>) => {
+    const input = e.currentTarget;
+    const file = input.files?.[0];
+    if (!file) return;
+    const r = importOutlineFromSvg(await file.text(), { targetLength: length });
+    setWarnings(r.warnings);
+    if (r.points.length >= 3) ctx.edit([[`${target}.customOutline`, r.points.map((p) => ({ x: round3(p.x), y: round3(p.y) }))]]);
+    input.value = '';
+  };
+  const what = target === 'body' ? 'neck end' : 'nut end';
+  return (
+    <FieldRow
+      id={id}
+      label="Import outline from SVG…"
+      help={`Draw the outline with the ${what} on the left and save as SVG. The largest closed shape is used, scaled to the ${target} length (${length.toFixed(0)} mm); re-import after changing the length.`}
+      messages={warnings.map((message) => ({ level: 'warning' as const, message }))}
+    >
+      {(d) => (
+        <>
+          <input id={id} type="file" accept=".svg,image/svg+xml" aria-describedby={d} onChange={onFile} />
+          <p className="hint subtle" data-outline-status={target}>
+            {current && current.length >= 3 ? `Outline loaded (${current.length} points).` : 'No outline imported yet.'}
+          </p>
+        </>
+      )}
+    </FieldRow>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Fanned-frets toggle
 // ---------------------------------------------------------------------------
 
@@ -428,6 +476,8 @@ export function SpecPanel(props: SpecPanelProps) {
                   </>
                 )}
                 {s.id !== 'scale' && basic.map((f) => <Field key={f.path} f={f} ctx={ctx} />)}
+                {s.id === 'body' && ctx.spec.body.shape === 'custom' && <OutlineImport ctx={ctx} target="body" />}
+                {s.id === 'headstock' && ctx.spec.headstock.shape === 'custom' && <OutlineImport ctx={ctx} target="headstock" />}
                 {adv.length > 0 && (
                   <div className="advanced">
                     <button type="button" className="link" aria-expanded={advOpen} onClick={() => toggleAdvanced(s.id)}>

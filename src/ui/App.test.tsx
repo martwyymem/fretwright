@@ -172,6 +172,35 @@ describe('App', () => {
     });
     await vi.waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/couldn’t be opened/));
   });
+
+  it('imports a custom body outline from SVG and shows import warnings', async () => {
+    render(<App />);
+    openStep('Body & pickups');
+    expect(document.getElementById('f-body-outline-import')).toBeNull();
+    fireEvent.change(input('f-body-shape'), { target: { value: 'custom' } });
+    const picker = screen.getByLabelText('Import outline from SVG…') as HTMLInputElement;
+    expect(picker.type).toBe('file');
+    expect(document.querySelector('[data-outline-status="body"]')!.textContent).toMatch(/No outline/);
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0 L200 0 L200 160 L0 160"/><circle cx="50" cy="50" r="5"/></svg>';
+    await act(async () => {
+      fireEvent.change(picker, { target: { files: [new File([svg], 'body.svg', { type: 'image/svg+xml' })] } });
+    });
+    await vi.waitFor(() => expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).body.customOutline?.length).toBe(4));
+    const pts = JSON.parse(localStorage.getItem(STORAGE_KEY)!).body.customOutline as { x: number; y: number }[];
+    const xs = pts.map((p) => p.x);
+    expect(Math.max(...xs) - Math.min(...xs)).toBeCloseTo(DEFAULT_SPEC.body.length, 6);
+    expect(document.querySelector('[data-outline-status="body"]')!.textContent).toMatch(/4 points/);
+    const msgs = document.getElementById('f-body-outline-import-msg')!.textContent!;
+    expect(msgs).toMatch(/not closed/);
+    expect(msgs).toMatch(/used the largest/);
+  });
+
+  it('offers the outline import for a custom headstock', () => {
+    render(<App />);
+    openStep('Headstock');
+    fireEvent.change(input('f-headstock-shape'), { target: { value: 'custom' } });
+    expect((document.getElementById('f-headstock-outline-import') as HTMLInputElement).type).toBe('file');
+  });
 });
 
 describe('specReducer', () => {
