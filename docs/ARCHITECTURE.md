@@ -37,6 +37,11 @@ GuitarSpec ──validateSpec──▶ issues[]            (plain-language messa
 - **Top-view frame:** instrument face up, headstock LEFT, bridge RIGHT. **Origin = fret 0 on the centerline**
   (on multiscale, the midpoint of the fret-0 line). +x along the centerline toward the bridge, **+y = bass side**.
 - **String order:** arrays are TREBLE → BASS. Index 0 = string 1 (thinnest).
+- **Body placement:** the body's neck-end edge on the centerline sits on the joint fret's centerline crossing
+  (`FretLine.center` of `neck.jointFret`). Archetype outlines live in `body-shapes.ts` (original generic shapes).
+- **Custom outlines** (`importOutlineFromSvg`, drawn with the attachment end on the LEFT, y flipped, centred on y):
+  `body.customOutline` — origin at the neck-pocket anchor (neck-end edge on the centerline), +x toward the tail,
+  +y bass side; `headstock.customOutline` — origin at the nut centre, +x toward the TIP, +y = up in the drawing.
 - **Curves:** templates flatten Béziers and arcs to polylines (`flattenCubic`, `arcPoints`) at ≤ 0.05 mm chord error.
   Drawings contain only `polyline`, `circle`, `text`.
 - **Layer kinds:** `cut` (heavy solid), `slot` (thin solid), `mark` (thin solid), `reference` (dashed, light), `annotation` (text).

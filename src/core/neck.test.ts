@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { dist } from './geom';
-import { signedArea } from './headstock';
+import { signedArea } from './polygon';
 import { buildFretboardLayout } from './layout';
 import {
   boardEndX,

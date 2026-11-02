@@ -10,3 +10,6 @@ export * from './validate';
 export { TEMPLATES, templateById } from './templates';
 export * from './headstock';
 export * from './body';
+export * from './body-shapes';
+export * from './polygon';
+export * from './outline-import';

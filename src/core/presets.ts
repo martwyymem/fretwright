@@ -127,7 +127,7 @@ export const PRESETS = [
     s.bridge = { stringSpread: 62, compensationTreble: 1.5, compensationBass: 4 };
     s.fretboard.radiusStart = inToMm(16);
     s.fretboard.radiusEnd = inToMm(20);
-    s.neck = { ...s.neck, profile: 'D', thicknessAt1: 20, thicknessAt12: 22, jointFret: 20, trussRod: { ...s.neck.trussRod, depth: 9.5 } }; // thin neck: low-profile rod
+    s.neck = { ...s.neck, profile: 'D', thicknessAt1: 20, thicknessAt12: 22, jointFret: 17, trussRod: { ...s.neck.trussRod, depth: 9.5 } }; // thin neck: low-profile rod
     s.headstock = { ...s.headstock, shape: 'split-offset', width: 90, length: 200 };
     s.body = { ...s.body, shape: 'superstrat', width: 340, pickups: [
       { type: 'humbucker', fromBridge: 45, angle: 0 },

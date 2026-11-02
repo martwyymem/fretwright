@@ -1,12 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { dist } from './geom';
+import { distToPolygon, distToSegment, pointInPolygon, signedArea } from './polygon';
 import {
   bassSideCount,
   buildHeadstockGeometry,
-  distToPolygon,
-  distToSegment,
-  pointInPolygon,
-  signedArea,
   TUNER_EDGE_CLEARANCE,
   TUNER_MIN_PITCH,
 } from './headstock';

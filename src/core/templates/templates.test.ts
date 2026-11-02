@@ -8,8 +8,12 @@ import { insideConvex } from './_util';
 import { fretboardTemplate } from './fretboard';
 import { GAUGE_EXTRA_WIDTH, GAUGE_HEIGHT, radiusGauges, radiusGaugesTemplate } from './radius-gauges';
 import { scaleLayoutTemplate } from './scale-layout';
+import { bodyTemplate } from './body';
+import { fullLayoutTemplate } from './full-layout';
+import { buildBodyGeometry } from '../body';
+import { buildHeadstockGeometry } from '../headstock';
 
-const OURS = [fretboardTemplate, scaleLayoutTemplate, radiusGaugesTemplate];
+const OURS = [fretboardTemplate, scaleLayoutTemplate, radiusGaugesTemplate, bodyTemplate, fullLayoutTemplate];
 
 const points = (s: Shape): Vec2[] => (s.kind === 'polyline' ? s.points : s.kind === 'circle' ? [s.center] : [s.at]);
 const layer = (d: Drawing, name: string) => d.layers.find((l) => l.name === name)!;
@@ -46,6 +50,42 @@ describe.each(PRESETS.map((p) => [p.id, p.spec] as [string, GuitarSpec]))('prese
     for (const s of slots) for (const p of points(s)) expect(insideConvex(p, poly, 1e-6)).toBe(true);
     expect(layer(d, 'nut').kind).toBe('mark');
     expect(d.notes!.join(' ')).toContain('Width at nut');
+  });
+
+  it('body: outline, pocket and pickup routes are cut; cavity is dashed; saddles marked', () => {
+    const d = bodyTemplate.build(spec);
+    const g = buildBodyGeometry(spec, buildFretboardLayout(spec));
+    expect(layer(d, 'outline').kind).toBe('cut');
+    expect(points(layer(d, 'outline').shapes[0]!)).toEqual(g.outline);
+    expect(layer(d, 'neck-pocket').shapes).toHaveLength(1);
+    expect(layer(d, 'pickups').kind).toBe('cut');
+    expect(layer(d, 'pickups').shapes).toHaveLength(spec.body.pickups.length);
+    expect(layer(d, 'control-cavity').kind).toBe('reference');
+    expect(layer(d, 'saddles').shapes).toHaveLength(1 + spec.strings.gauges.length * 3);
+    expect(layer(d, 'strings').shapes).toHaveLength(spec.strings.gauges.length);
+    const txt = layer(d, 'labels').shapes.map((s) => (s.kind === 'text' ? s.text : '')).join('\n');
+    expect(txt).toContain(`${spec.body.neckPocketDepth.toFixed(1)} mm deep`);
+    expect(txt).toContain('CONTROL CAVITY');
+    expect(txt).toContain('Saddle line');
+    expect(d.notes!.join(' ')).toContain(`fret ${spec.neck.jointFret}`);
+  });
+
+  it('full layout: body, headstock, fretboard, strings and an overall length that spans them', () => {
+    const d = fullLayoutTemplate.build(spec);
+    const lay = buildFretboardLayout(spec);
+    const hs = buildHeadstockGeometry(spec, lay);
+    for (const n of ['body', 'headstock', 'fretboard', 'frets', 'nut', 'strings', 'saddle-line', 'pickups', 'dimensions']) {
+      expect(layer(d, n), n).toBeTruthy();
+    }
+    expect(layer(d, 'strings').shapes.length).toBeGreaterThanOrEqual(spec.strings.gauges.length);
+    expect(layer(d, 'tuners')?.shapes.length ?? 0).toBe(hs.tuners.length);
+    const dim = points(layer(d, 'dimensions').shapes[0]!);
+    const g = buildBodyGeometry(spec, lay);
+    const minX = Math.min(...hs.outline.map((p) => p.x), ...lay.outline.map((p) => p.x));
+    const maxX = Math.max(...g.outline.map((p) => p.x));
+    expect(dim[0]!.x).toBeCloseTo(minX, 9);
+    expect(dim[1]!.x).toBeCloseTo(maxX, 9);
+    expect(d.notes!.join(' ')).toContain(`Overall length ${(maxX - minX).toFixed(1)} mm`);
   });
 
   it('scale-layout: one string line and one saddle mark per string', () => {
@@ -98,4 +138,15 @@ it('fretboard template draws blocks as closed polylines', () => {
   const shapes = layer(fretboardTemplate.build(spec), 'inlays').shapes;
   expect(shapes.length).toBeGreaterThan(0);
   for (const s of shapes) expect(s.kind === 'polyline' && s.closed && s.points.length === 4).toBe(true);
+});
+
+it('body and full layout still build for a custom shape without an outline', () => {
+  const spec = structuredClone(DEFAULT_SPEC);
+  spec.body.shape = 'custom';
+  for (const t of [bodyTemplate, fullLayoutTemplate]) {
+    const d = t.build(spec);
+    expect(drawingBounds(d)).not.toBeNull();
+    expect(d.layers.every((l) => l.shapes.length > 0)).toBe(true);
+  }
+  expect(bodyTemplate.build(spec).notes!.join(' ')).toMatch(/import an SVG outline/);
 });

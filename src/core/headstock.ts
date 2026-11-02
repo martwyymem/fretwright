@@ -22,6 +22,7 @@
 import type { Vec2 } from './geom';
 import { add, dist, flattenCubic, lineIntersection, norm, scale, sub, v } from './geom';
 import type { FretboardLayout } from './layout';
+import { distToPolygon, pointInPolygon, signedArea } from './polygon';
 import type { GuitarSpec } from './spec';
 
 export interface TunerHole {
@@ -59,45 +60,6 @@ export const POST_FRACTION = 0.6;
 const PLACE_MARGIN = 1.5;
 /** Spacing (mm) traded per mm the tuner line moves inward from the edge. */
 const INWARD_COST = 0.5;
-
-// ---------------------------------------------------------------------------
-// Polygon helpers
-// ---------------------------------------------------------------------------
-
-export function signedArea(poly: readonly Vec2[]): number {
-  let a = 0;
-  for (let i = 0; i < poly.length; i++) {
-    const p = poly[i]!;
-    const q = poly[(i + 1) % poly.length]!;
-    a += p.x * q.y - q.x * p.y;
-  }
-  return a / 2;
-}
-
-/** Even-odd point-in-polygon test. */
-export function pointInPolygon(p: Vec2, poly: readonly Vec2[]): boolean {
-  let inside = false;
-  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-    const a = poly[i]!;
-    const b = poly[j]!;
-    if (a.y > p.y !== b.y > p.y && p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x) inside = !inside;
-  }
-  return inside;
-}
-
-export function distToSegment(p: Vec2, a: Vec2, b: Vec2): number {
-  const d = sub(b, a);
-  const l2 = d.x * d.x + d.y * d.y;
-  const t = l2 === 0 ? 0 : Math.max(0, Math.min(1, ((p.x - a.x) * d.x + (p.y - a.y) * d.y) / l2));
-  return dist(p, add(a, scale(d, t)));
-}
-
-/** Distance from p to the boundary of a closed polygon. */
-export function distToPolygon(p: Vec2, poly: readonly Vec2[]): number {
-  let m = Infinity;
-  for (let i = 0; i < poly.length; i++) m = Math.min(m, distToSegment(p, poly[i]!, poly[(i + 1) % poly.length]!));
-  return m;
-}
 
 // ---------------------------------------------------------------------------
 // Outline construction

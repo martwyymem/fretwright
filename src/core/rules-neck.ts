@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 /** Sanity rules for the neck, truss rod and headstock. Registered in validate.ts (RULES). */
 import { dist } from './geom';
-import { buildHeadstockGeometry, distToPolygon, pointInPolygon, TUNER_EDGE_CLEARANCE, TUNER_MIN_PITCH } from './headstock';
+import { buildHeadstockGeometry, TUNER_EDGE_CLEARANCE, TUNER_MIN_PITCH } from './headstock';
+import { distToPolygon, pointInPolygon } from './polygon';
 import { buildFretboardLayout } from './layout';
 import { boardStartX, neckDepthAt, neckEndX, TRUSS_HEADSTOCK_INSET, trussRodChannel } from './neck';
 import type { SpecIssue } from './spec';
