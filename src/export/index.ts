@@ -57,6 +57,11 @@ export function drawingToPdf(_d: Drawing, _opts: PdfOptions = DEFAULT_PDF_OPTION
   throw new Error('drawingToPdf: not implemented');
 }
 
+/** One PDF containing several drawings (each tiled per `opts`), with a cover page listing them. */
+export function drawingsToPdf(_ds: Drawing[], _opts: PdfOptions = DEFAULT_PDF_OPTIONS): Uint8Array {
+  throw new Error('drawingsToPdf: not implemented');
+}
+
 /** ASCII DXF (R12-compatible ENTITIES), units = mm ($INSUNITS 4), one DXF layer per Drawing layer. */
 export function drawingToDxf(_d: Drawing): string {
   throw new Error('drawingToDxf: not implemented');
