@@ -62,7 +62,7 @@ export const DEFAULT_SPEC: GuitarSpec = {
     thickness: 44.5,
     neckPocketDepth: 16,
     pickups: [
-      { type: 'single', fromBridge: 41, angle: 8 },
+      { type: 'single', fromBridge: 41, angle: -8 },
       { type: 'single', fromBridge: 98, angle: 0 },
       { type: 'single', fromBridge: 160, angle: 0 },
     ],
