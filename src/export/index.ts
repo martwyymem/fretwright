@@ -4,6 +4,12 @@
  * OWNER: wave-1 "export" agent. Signatures are the contract.
  */
 import type { Drawing } from '../core/geom';
+import { drawingToDxfImpl } from './dxf';
+import { drawingToPdfImpl, drawingsToPdfImpl } from './pdf';
+import { drawingToSvgImpl } from './svg';
+import { planTilesImpl } from './tiles';
+
+export { PAPER_MM, FOOTER_H, BOUNDS_PAD } from './tiles';
 
 export type PaperSize = 'a4' | 'letter' | 'a3' | 'tabloid';
 
@@ -43,26 +49,26 @@ export interface TilePlan {
 }
 
 /** Pure page planning (testable without a PDF library). */
-export function planTiles(_d: Drawing, _opts: PdfOptions): TilePlan {
-  throw new Error('planTiles: not implemented');
+export function planTiles(d: Drawing, opts: PdfOptions): TilePlan {
+  return planTilesImpl(d, opts);
 }
 
 /** SVG with width/height in mm and a viewBox in mm, so it prints and imports at 1:1. */
-export function drawingToSvg(_d: Drawing): string {
-  throw new Error('drawingToSvg: not implemented');
+export function drawingToSvg(d: Drawing): string {
+  return drawingToSvgImpl(d);
 }
 
 /** PDF bytes. Each page carries a calibration ruler, tile label, alignment marks and "print at 100%" note. */
-export function drawingToPdf(_d: Drawing, _opts: PdfOptions = DEFAULT_PDF_OPTIONS): Uint8Array {
-  throw new Error('drawingToPdf: not implemented');
+export function drawingToPdf(d: Drawing, opts: PdfOptions = DEFAULT_PDF_OPTIONS): Uint8Array {
+  return drawingToPdfImpl(d, opts);
 }
 
 /** One PDF containing several drawings (each tiled per `opts`), with a cover page listing them. */
-export function drawingsToPdf(_ds: Drawing[], _opts: PdfOptions = DEFAULT_PDF_OPTIONS): Uint8Array {
-  throw new Error('drawingsToPdf: not implemented');
+export function drawingsToPdf(ds: Drawing[], opts: PdfOptions = DEFAULT_PDF_OPTIONS): Uint8Array {
+  return drawingsToPdfImpl(ds, opts);
 }
 
 /** ASCII DXF (R12-compatible ENTITIES), units = mm ($INSUNITS 4), one DXF layer per Drawing layer. */
-export function drawingToDxf(_d: Drawing): string {
-  throw new Error('drawingToDxf: not implemented');
+export function drawingToDxf(d: Drawing): string {
+  return drawingToDxfImpl(d);
 }
