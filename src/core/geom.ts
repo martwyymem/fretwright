@@ -94,7 +94,10 @@ export interface Drawing {
   id: string;
   title: string;
   layers: Layer[];
-  /** Optional free-text notes printed on the template (e.g. key dimensions). */
+  /**
+   * Plain-text summary of key dimensions, for the UI and listings. Templates must ALSO draw
+   * anything that should appear on paper as text shapes; exporters do not print `notes`.
+   */
   notes?: string[];
 }
 

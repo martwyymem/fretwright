@@ -7,7 +7,7 @@
  *            [footer band FOOTER_H: rulers | title, tile label, print note]
  */
 import { jsPDF } from 'jspdf';
-import { drawingBounds, shapeBounds, type Drawing, type Shape, type Vec2 } from '../core/geom';
+import { drawingBounds, type Drawing, type Shape, type Vec2 } from '../core/geom';
 import type { PdfOptions, Tile, TilePlan } from './index';
 import { CAP_TO_FONT, LAYER_STYLE, MM_PER_PT, fmt, rowLabel, tileLabel, type StrokeStyle } from './style';
 import { FOOTER_H, PAPER_MM, planTilesImpl } from './tiles';
@@ -203,70 +203,6 @@ function overlapGuides({ doc, plan, tile, margin, overlap }: TileCtx) {
   }
 }
 
-/** Points ≈1 mm apart along every shape (text: its rough box), to find empty paper. */
-function samplePoints(d: Drawing): Vec2[] {
-  const out: Vec2[] = [];
-  const along = (a: Vec2, b: Vec2) => {
-    const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.y - a.y)));
-    for (let k = 0; k < n; k++) out.push({ x: a.x + ((b.x - a.x) * k) / n, y: a.y + ((b.y - a.y) * k) / n });
-  };
-  for (const l of d.layers) {
-    for (const s of l.shapes) {
-      if (s.kind === 'polyline') {
-        const pts = s.closed ? [...s.points, ...s.points.slice(0, 1)] : s.points;
-        pts.forEach((p, k) => (k + 1 < pts.length ? along(p, pts[k + 1]!) : out.push(p)));
-      } else if (s.kind === 'circle') {
-        const n = Math.max(8, Math.ceil(2 * Math.PI * s.r));
-        for (let k = 0; k < n; k++) {
-          const a = (2 * Math.PI * k) / n;
-          out.push({ x: s.center.x + s.r * Math.cos(a), y: s.center.y + s.r * Math.sin(a) });
-        }
-      } else {
-        const b = shapeBounds(s)!;
-        along({ x: b.minX, y: b.minY }, { x: b.maxX, y: b.maxY });
-        along({ x: b.minX, y: b.maxY }, { x: b.maxX, y: b.minY });
-      }
-    }
-  }
-  return out;
-}
-
-/**
- * Notes on the first sheet, at the spot (clear of overlap bands) that covers the least geometry,
- * preferring the top-left. The box is only painted white when it hides nothing.
- */
-function notesBox({ doc, d, tile, margin, overlap }: TileCtx) {
-  const notes = d.notes ?? [];
-  if (notes.length === 0) return;
-  const cap = 2;
-  const lh = 3.6;
-  doc.setFontSize((cap * CAP_TO_FONT) / MM_PER_PT);
-  const bw = Math.max(...notes.map((n) => doc.getTextWidth(pdfSafe(n)))) + 4;
-  const bh = notes.length * lh + 2;
-  const w = tile.window;
-  const inset = overlap + 2;
-  const map = toPage(tile, margin);
-  const pts = samplePoints(d).map(map);
-  const score = (x: number, y: number) =>
-    pts.reduce((n, [px, py]) => (px >= x && px <= x + bw && py >= y && py <= y + bh ? n + 1 : n), 0);
-  let best = { x: margin + inset, y: margin + inset, n: Infinity };
-  const x1 = margin + w.maxX - w.minX - inset - bw;
-  const y1 = margin + w.maxY - w.minY - inset - bh;
-  for (let y = margin + inset; y <= y1 && best.n > 0; y += 5) {
-    for (let x = margin + inset; x <= x1 && best.n > 0; x += 5) {
-      const n = score(x, y);
-      if (n < best.n) best = { x, y, n };
-    }
-  }
-  const { x, y } = best;
-  if (best.n === 0) {
-    doc.setFillColor('#ffffff');
-    stroke(doc, { width: 0.15, color: GREY });
-    doc.rect(x, y, bw, bh, 'FD');
-  }
-  notes.forEach((n, i) => text(doc, n, x + 2, y + 1 + lh * (i + 1) - 0.9, cap));
-}
-
 function tilePage(ctx: TileCtx, index: number, title: string) {
   const { doc, d, plan, tile, margin } = ctx;
   const w = tile.window;
@@ -288,7 +224,6 @@ function tilePage(ctx: TileCtx, index: number, title: string) {
   // Window frame: the printed edge of this sheet's share of the drawing.
   stroke(doc, { width: 0.1, color: GREY });
   doc.rect(margin, margin, tw, th, 'S');
-  if (index === 0) notesBox(ctx);
 
   const row = tile.label.replace(/\d+$/, '');
   footer(doc, plan.pageWidth, plan.pageHeight, margin, title, [
