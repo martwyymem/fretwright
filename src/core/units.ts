@@ -3,7 +3,11 @@
 
 export const MM_PER_INCH = 25.4;
 
-export const inToMm = (inches: number): number => inches * MM_PER_INCH;
+/**
+ * Rounded to 15 significant digits to drop binary noise: 25.5 * 25.4 is 647.6999999999999 in
+ * floating point, but a builder who types 25.5″ means exactly 647.7 mm.
+ */
+export const inToMm = (inches: number): number => Number((inches * MM_PER_INCH).toPrecision(15));
 export const mmToIn = (mm: number): number => mm / MM_PER_INCH;
 export const degToRad = (deg: number): number => (deg * Math.PI) / 180;
 export const radToDeg = (rad: number): number => (rad * 180) / Math.PI;

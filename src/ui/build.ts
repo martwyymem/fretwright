@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 /** Memoised, crash-proof wrappers around core builders. Specs are immutable, so identity is a safe key. */
 import type { Drawing, FretboardLayout, GuitarSpec } from '../core';
-import { buildFretboardLayout, templateById } from '../core';
+import { buildFretboardLayout, geometryBlocker, templateById } from '../core';
 
 export type BuildResult = { ok: true; drawing: Drawing } | { ok: false; error: string };
 
@@ -16,6 +16,8 @@ export function buildTemplate(spec: GuitarSpec, templateId: string): BuildResult
   if (hit) return hit;
   let result: BuildResult;
   try {
+    const blocker = geometryBlocker(spec);
+    if (blocker) throw new Error(blocker.message);
     const t = templateById(templateId);
     if (!t) throw new Error(`Unknown template "${templateId}"`);
     result = { ok: true, drawing: t.build(spec) };
@@ -33,6 +35,8 @@ export function safeLayout(spec: GuitarSpec): { layout: FretboardLayout | null; 
   if (hit) return hit;
   let r: { layout: FretboardLayout | null; error?: string };
   try {
+    const blocker = geometryBlocker(spec);
+    if (blocker) throw new Error(blocker.message);
     r = { layout: buildFretboardLayout(spec) };
   } catch (e) {
     r = { layout: null, error: errorText(e) };

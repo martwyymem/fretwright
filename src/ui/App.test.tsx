@@ -112,6 +112,7 @@ describe('App', () => {
     openStep('Scale & frets');
     const frets = input('f-frets-count');
     fireEvent.change(frets, { target: { value: '5' } });
+    fireEvent.keyDown(frets, { key: 'Enter' });
     expect(checkPanel().getByRole('button', { name: /Number of frets must be at least 12/ })).toBeTruthy();
     expect(screen.getByText(/Showing the last valid design/)).toBeTruthy();
     expect(dim('Frets')).toBe('22');
@@ -144,7 +145,27 @@ describe('App', () => {
     expect(document.querySelectorAll('.gauges input')).toHaveLength(7);
     expect(input('f-strings-gauges-6').value).toBe('56');
     fireEvent.change(input('f-strings-gauges-0'), { target: { value: '9' } });
+    fireEvent.keyDown(input('f-strings-gauges-0'), { key: 'Enter' });
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!).strings.gauges[0]).toBeCloseTo(inToMm(0.009), 9);
+  });
+
+  it('field edits apply after a pause in typing, not on every keystroke', () => {
+    vi.useFakeTimers();
+    try {
+      render(<App />);
+      openStep('Scale & frets');
+      const frets = input('f-frets-count');
+      fireEvent.change(frets, { target: { value: '2' } });
+      fireEvent.change(frets, { target: { value: '24' } });
+      expect(frets.value).toBe('24');
+      expect(dim('Frets')).toBe('22');
+      act(() => {
+        vi.advanceTimersByTime(400);
+      });
+      expect(dim('Frets')).toBe('24');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('restores an autosaved design and ignores a corrupt one', () => {
