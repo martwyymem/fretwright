@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 /** Low-level form controls. Every control renders a real <label>. */
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+
+/** Typing pauses this long before the value is applied (rebuilding every template is not free). */
+export const COMMIT_DELAY_MS = 300;
 
 /**
  * Text box editing a value of type T. While focused, what the user typed is kept (so "25."
  * is not reformatted mid-typing); any outside change (undo, preset) wins over the draft.
+ * A valid value is applied after a short pause in typing, or at once on Enter / leaving the field,
+ * so intermediate text ("6" on the way to "648") doesn't rebuild every template.
  */
 export function DraftInput<T>(props: {
   id: string;
@@ -21,9 +26,26 @@ export function DraftInput<T>(props: {
   inputMode?: 'decimal' | 'text';
 }) {
   const { id, value, toText, fromText, onCommit, suffix, describedBy, invalid, ariaLabel, className, inputMode = 'decimal' } = props;
-  const [draft, setDraft] = useState<{ text: string; committed: string } | null>(null);
+  const [draft, setDraft] = useState<{ text: string; committed: string; pending: boolean } | null>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingValue = useRef<{ v: T } | null>(null);
+  const commitRef = useRef(onCommit);
+  commitRef.current = onCommit;
+  const flush = () => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+    const p = pendingValue.current;
+    pendingValue.current = null;
+    if (p) {
+      commitRef.current(p.v);
+      setDraft((d) => (d ? { ...d, pending: false } : d));
+    }
+  };
+  const flushRef = useRef(flush);
+  flushRef.current = flush;
+  useEffect(() => () => flushRef.current(), []);
   const key = JSON.stringify(value);
-  const showDraft = draft !== null && draft.committed === key;
+  const showDraft = draft !== null && (draft.pending || draft.committed === key);
   const text = showDraft ? draft.text : toText(value);
   const bad = showDraft && fromText(draft.text) === undefined;
   return (
@@ -41,14 +63,24 @@ export function DraftInput<T>(props: {
         onChange={(e) => {
           const t = e.target.value;
           const v = fromText(t);
+          if (timer.current) clearTimeout(timer.current);
+          timer.current = null;
           if (v !== undefined) {
-            setDraft({ text: t, committed: JSON.stringify(v) });
-            onCommit(v);
+            setDraft({ text: t, committed: JSON.stringify(v), pending: true });
+            pendingValue.current = { v };
+            timer.current = setTimeout(() => flushRef.current(), COMMIT_DELAY_MS);
           } else {
-            setDraft({ text: t, committed: key });
+            pendingValue.current = null;
+            setDraft({ text: t, committed: key, pending: false });
           }
         }}
-        onBlur={() => setDraft(null)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') flush();
+        }}
+        onBlur={() => {
+          flush();
+          setDraft(null);
+        }}
       />
       {suffix && (
         <span className="num-suffix" aria-hidden="true">
