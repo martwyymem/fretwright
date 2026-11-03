@@ -53,6 +53,10 @@ without the Gatekeeper prompt. The Windows `.exe` is unsigned.
 Icons live in [`assets/icon/`](assets/icon): `fretwright.svg` (Windows, Linux, web) and `fretwright-macos.svg`
 (macOS icon grid) are the sources; `render.sh` regenerates the `.icns`, `.ico` and PNGs.
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Report security problems privately as described in [SECURITY.md](SECURITY.md).
+
 ## License
 
 GPL-3.0-or-later. See [LICENSE](LICENSE).

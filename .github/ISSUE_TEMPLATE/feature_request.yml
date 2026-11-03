@@ -1,0 +1,21 @@
+name: Feature request
+description: Suggest a template, preset, export option or other improvement.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What do you want to do?
+      description: The task you're trying to get done, and what's missing or awkward today.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Suggested solution
+      description: How you'd like it to work. Sketches, photos or references to real instruments help.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: How do you do it now?
+      description: Workarounds or other tools you use for this.

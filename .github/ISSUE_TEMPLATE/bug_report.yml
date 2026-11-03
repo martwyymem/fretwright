@@ -1,0 +1,53 @@
+name: Bug report
+description: Something doesn't work, or a dimension on a template is wrong.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Security problems go through the private form in [SECURITY.md](https://github.com/martwyymem/fretwright/blob/main/SECURITY.md), not here.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Choose the "…" preset
+        2. Set scale length to …
+        3. Export the PDF
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where are you running Fretwright?
+      options:
+        - Browser
+        - macOS app
+        - Windows app
+        - Linux (Flatpak)
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version and system
+      placeholder: "Fretwright 0.1.0, Windows 11 / macOS 26.1 / Firefox 140 on Fedora 43"
+    validations:
+      required: true
+  - type: textarea
+    id: dimensions
+    attributes:
+      label: Wrong dimension (if any)
+      description: The value Fretwright shows, the value you expected, and where your value comes from (spec sheet, measured instrument, formula).
+  - type: textarea
+    id: files
+    attributes:
+      label: Project file or screenshots
+      description: Attach the project file (the .fretwright.json from Save) or screenshots. Drag files into this box.
