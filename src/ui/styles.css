@@ -108,8 +108,8 @@ input[type='checkbox'] { width: 1rem; height: 1rem; accent-color: var(--accent);
   display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.6rem 1rem;
   padding: 0.55rem 1rem; background: var(--panel); border-bottom: 1px solid var(--line);
 }
-.brand { display: flex; align-items: baseline; gap: 0.6rem; min-width: 0; }
-.logo { font-size: 1.3rem; color: var(--accent); }
+.brand { display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
+.logo { display: block; width: 26px; height: 26px; flex: none; }
 .brand-name { font-weight: 700; font-size: 1.1rem; letter-spacing: 0.01em; }
 .brand-sub { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 22ch; }
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; }
@@ -176,7 +176,8 @@ label.compact select { color: var(--text); }
 .field-control select { width: 100%; }
 .field-control > input[type='text'] { width: 100%; }
 .help-btn {
-  border: none; background: none; padding: 0 0.15rem; color: var(--muted); font-size: 0.95rem; line-height: 1;
+  border: none; background: none; padding: 0 0.15rem; color: var(--muted); line-height: 0;
+  display: inline-flex; align-items: center;
 }
 .help-btn:hover:not(:disabled) { background: none; color: var(--accent); }
 .help-btn[aria-expanded='true'] { color: var(--accent); }

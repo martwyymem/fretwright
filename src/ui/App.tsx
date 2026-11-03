@@ -217,9 +217,7 @@ export function App() {
     <div className="app">
       <header className="topbar">
         <div className="brand">
-          <span className="logo" aria-hidden="true">
-            ⟊
-          </span>
+          <img className="logo" src="./assets/icon.svg" alt="" width={26} height={26} />
           <span className="brand-name">Fretwright</span>
           <span className="brand-sub">{spec.meta.name}</span>
         </div>

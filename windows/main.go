@@ -40,13 +40,14 @@ func main() {
 		fatal("Fretwright could not unpack its files.", err.Error())
 	}
 
+	width, height := initialSize(1360, 860)
 	w := webview2.NewWithOptions(webview2.WebViewOptions{
 		DataPath:  filepath.Join(base, "WebView2"),
 		AutoFocus: true,
 		WindowOptions: webview2.WindowOptions{
 			Title:  "Fretwright",
-			Width:  1360,
-			Height: 860,
+			Width:  width,
+			Height: height,
 			IconId: 1, // winres: RT_GROUP_ICON #1
 			Center: true,
 		},
@@ -76,6 +77,23 @@ func main() {
 	}
 	w.Navigate("https://" + host + "/index.html")
 	w.Run()
+}
+
+// initialSize fits the preferred window size to 90 % of the work area (go-webview2 centres with
+// unsigned maths, so a window wider than the screen would open off-screen).
+// Sizes are in 96-dpi units and scaled to the display (the app is per-monitor DPI aware).
+func initialSize(w, h uint) (uint, uint) {
+	user32 := windows.NewLazySystemDLL("user32.dll")
+	if dpi, _, _ := user32.NewProc("GetDpiForSystem").Call(); dpi > 96 {
+		w, h = w*uint(dpi)/96, h*uint(dpi)/96
+	}
+	var r struct{ Left, Top, Right, Bottom int32 }
+	const spiGetWorkArea = 0x0030
+	if ok, _, _ := user32.NewProc("SystemParametersInfoW").Call(spiGetWorkArea, 0, uintptr(unsafe.Pointer(&r)), 0); ok == 0 {
+		return w, h
+	}
+	maxW, maxH := uint(float64(r.Right-r.Left)*0.9), uint(float64(r.Bottom-r.Top)*0.9)
+	return min(w, maxW), min(h, maxH)
 }
 
 // chromiumOf reaches the *edge.Chromium inside go-webview2's window (needed for the virtual host

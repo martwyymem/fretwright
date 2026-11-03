@@ -107,7 +107,7 @@ export function NumberInput(
   );
 }
 
-/** "ⓘ" toggle that reveals a one-line hint. */
+/** (i) toggle that reveals a one-line hint. Drawn as SVG: the ⓘ glyph is missing from many Linux fonts. */
 export function HelpToggle({ id, label, open, onToggle }: { id: string; label: string; open: boolean; onToggle: () => void }) {
   return (
     <button
@@ -119,7 +119,11 @@ export function HelpToggle({ id, label, open, onToggle }: { id: string; label: s
       title={open ? 'Hide help' : 'What is this?'}
       onClick={onToggle}
     >
-      ⓘ
+      <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+        <circle cx="8" cy="8" r="6.75" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        <circle cx="8" cy="4.9" r="1" fill="currentColor" />
+        <path d="M8 7.2v4.6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      </svg>
     </button>
   );
 }
