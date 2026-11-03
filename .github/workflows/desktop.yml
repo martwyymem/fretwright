@@ -43,8 +43,10 @@ jobs:
       - name: Self-test (load, autosave, SVG/DXF/PDF downloads)
         run: |
           T="$RUNNER_TEMP/selftest"; mkdir -p "$T/1" "$T/2"
-          FRETWRIGHT_SELFTEST="$T/1" timeout 90 build/Fretwright.app/Contents/MacOS/Fretwright
-          FRETWRIGHT_SELFTEST="$T/2" timeout 90 build/Fretwright.app/Contents/MacOS/Fretwright
+          # macOS has no `timeout`; perl's alarm kills a hung run after 90 s.
+          for run in 1 2; do
+            FRETWRIGHT_SELFTEST="$T/$run" perl -e 'alarm 90; exec @ARGV' build/Fretwright.app/Contents/MacOS/Fretwright
+          done
           node scripts/check-selftest.mjs "$T/1" "$T/2" "$T/2"
       - uses: actions/upload-artifact@v7
         with:
@@ -77,10 +79,13 @@ jobs:
         shell: pwsh
         run: |
           $t = Join-Path $env:RUNNER_TEMP 'selftest'
-          New-Item -ItemType Directory -Force "$t\1", "$t\2" | Out-Null
+          New-Item -ItemType Directory -Force "$t\1", "$t\2", "$t\3" | Out-Null
           Add-Type -AssemblyName System.Windows.Forms, System.Drawing
-          foreach ($run in 1, 2) {
+          # One export per run: Chromium allows one download per user gesture, and synthetic clicks aren't gestures.
+          $clicks = @{ 1 = 'SVG'; 2 = 'DXF'; 3 = 'PDF' }
+          foreach ($run in 1, 2, 3) {
             $env:FRETWRIGHT_SELFTEST = "$t\$run"
+            $env:FRETWRIGHT_SELFTEST_CLICK = $clicks[$run]
             $p = Start-Process -FilePath build\windows\Fretwright-x64.exe -PassThru
             Start-Sleep -Seconds 5
             $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds

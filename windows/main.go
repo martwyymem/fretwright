@@ -169,14 +169,20 @@ func fatal(text, detail string) {
 }
 
 // installSelfTest (FRETWRIGHT_SELFTEST=<dir>): once the page has loaded, report its state to
-// <dir>\selftest.json, click the SVG / DXF / PDF export buttons (files land in the Downloads
-// folder), then quit.
+// <dir>\selftest.json, click the export buttons named in FRETWRIGHT_SELFTEST_CLICK (default
+// "SVG"; files land in the Downloads folder), then quit. Chromium allows one download per user
+// gesture and synthetic clicks aren't gestures, so test one export per run.
 func installSelfTest(w webview2.WebView, dir string) {
+	click := os.Getenv("FRETWRIGHT_SELFTEST_CLICK")
+	if click == "" {
+		click = "SVG"
+	}
+	names := `['` + strings.Join(strings.Split(strings.ReplaceAll(click, "'", ""), ","), `','`) + `']`
 	_ = w.Bind("fretwrightSelfTestReport", func(report string) {
 		_ = os.WriteFile(filepath.Join(dir, "selftest.json"), []byte(report), 0o644)
 		w.Dispatch(w.Terminate)
 	})
-	w.Init(strings.TrimSpace(`
+	w.Init(strings.ReplaceAll(strings.TrimSpace(`
 window.addEventListener('load', () => setTimeout(async () => {
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const before = localStorage.getItem('fretwright-selftest');
@@ -190,12 +196,12 @@ window.addEventListener('load', () => setTimeout(async () => {
     previousRun: before,
     autosaveKeys: Object.keys(localStorage),
   };
-  for (const name of ['SVG', 'DXF', 'PDF']) {
+  for (const name of __NAMES__) {
     for (const b of document.querySelectorAll('button')) if (b.textContent.trim() === name) b.click();
     await sleep(1500);
   }
   await sleep(2000);
   window.fretwrightSelfTestReport(JSON.stringify(report));
 }, 1500));
-`))
+`), "__NAMES__", names))
 }
