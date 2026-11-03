@@ -56,7 +56,8 @@ export function downloadFile(name: string, data: string | Uint8Array, mime: stri
     document.body.appendChild(a);
     a.click();
     a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    // Generous: the macOS app shows a save panel before it reads the blob.
+    setTimeout(() => URL.revokeObjectURL(url), 120_000);
     return true;
   } catch {
     return false;
