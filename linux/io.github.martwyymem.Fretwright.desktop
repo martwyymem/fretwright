@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Fretwright
+GenericName=Guitar Template Designer
+Comment=Design electric guitars and basses and print accurate 1:1 paper templates
+Exec=fretwright
+Icon=io.github.martwyymem.Fretwright
+Terminal=false
+Categories=Graphics;2DGraphics;VectorGraphics;
+Keywords=guitar;bass;luthier;fretboard;fret;template;multiscale;
+StartupNotify=true

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: CC0-1.0 -->
+<component type="desktop-application">
+  <id>io.github.martwyymem.Fretwright</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>Fretwright</name>
+  <summary>Design guitars and print 1:1 paper templates</summary>
+  <developer id="io.github.martwyymem">
+    <name>Fretwright contributors</name>
+  </developer>
+  <description>
+    <p>
+      Fretwright turns a few measurements into accurate, full-size paper templates for building
+      electric guitars and basses: fretboard with fret slots, scale and bridge layout, radius gauges,
+      neck profile and side view, headstock with tuner holes, and the body with neck pocket and
+      pickup routes.
+    </p>
+    <ul>
+      <li>Single scale and fanned frets (multiscale), 4 to 12 strings, zero fret, compensation</li>
+      <li>Presets for classic bolt-on, single-cut, superstrat, 7-string multiscale and basses</li>
+      <li>Print on A4, Letter, A3 or Tabloid with a calibration ruler and alignment marks</li>
+      <li>Export SVG and DXF at 1:1 for laser cutters and CNC</li>
+      <li>Plain-language checks that explain what to change</li>
+    </ul>
+    <p>Inspired by MarzWorkbench. Works offline.</p>
+  </description>
+  <launchable type="desktop-id">io.github.martwyymem.Fretwright.desktop</launchable>
+  <url type="homepage">https://github.com/martwyymem/fretwright</url>
+  <url type="bugtracker">https://github.com/martwyymem/fretwright/issues</url>
+  <url type="vcs-browser">https://github.com/martwyymem/fretwright</url>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Designing a guitar with a live 1:1 preview</caption>
+      <image>https://raw.githubusercontent.com/martwyymem/fretwright/main/assets/screenshots/main.png</image>
+    </screenshot>
+  </screenshots>
+  <branding>
+    <color type="primary" scheme_preference="light">#8fd3ad</color>
+    <color type="primary" scheme_preference="dark">#0f5132</color>
+  </branding>
+  <content_rating type="oars-1.1"/>
+  <requires>
+    <display_length compare="ge">900</display_length>
+  </requires>
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </supports>
+  <releases>
+    <release version="0.1.0" date="2026-11-03">
+      <description>
+        <p>First preview: eight templates, PDF/SVG/DXF export, presets for guitars and basses.</p>
+      </description>
+    </release>
+  </releases>
+</component>

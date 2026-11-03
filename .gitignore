@@ -5,3 +5,5 @@ dist/
 coverage/
 .claude/worktrees/
 build/
+windows/web/
+windows/*.syso

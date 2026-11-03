@@ -1,0 +1,45 @@
+# Flatpak manifest. Build from the repository root after `npm run build` (needs dist/):
+#   bash linux/build-flatpak.sh
+id: io.github.martwyymem.Fretwright
+runtime: org.gnome.Platform
+runtime-version: '51'
+sdk: org.gnome.Sdk
+command: fretwright
+finish-args:
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  # Exports are saved to the Downloads folder.
+  - --filesystem=xdg-download
+modules:
+  - name: fretwright
+    buildsystem: simple
+    build-commands:
+      - install -Dm755 fretwright.py /app/bin/fretwright
+      - mkdir -p /app/share/fretwright && cp -r web /app/share/fretwright/web
+      - install -Dm644 LICENSE /app/share/licenses/io.github.martwyymem.Fretwright/LICENSE
+      - install -Dm644 io.github.martwyymem.Fretwright.desktop -t /app/share/applications
+      - install -Dm644 io.github.martwyymem.Fretwright.metainfo.xml -t /app/share/metainfo
+      - install -Dm644 fretwright.svg /app/share/icons/hicolor/scalable/apps/io.github.martwyymem.Fretwright.svg
+      - |
+        for s in 16 24 32 48 64 128 256 512; do
+          install -Dm644 png/fretwright-$s.png /app/share/icons/hicolor/${s}x${s}/apps/io.github.martwyymem.Fretwright.png
+        done
+    sources:
+      - type: file
+        path: fretwright.py
+      - type: file
+        path: io.github.martwyymem.Fretwright.desktop
+      - type: file
+        path: io.github.martwyymem.Fretwright.metainfo.xml
+      - type: file
+        path: ../LICENSE
+      - type: file
+        path: ../assets/icon/fretwright.svg
+      - type: dir
+        path: ../assets/icon/png
+        dest: png
+      - type: dir
+        path: ../dist
+        dest: web

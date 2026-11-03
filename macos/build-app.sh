@@ -39,17 +39,7 @@ cp LICENSE "$APP/Contents/Resources/LICENSE.txt"
 sed -e "s/__VERSION__/$VERSION/" -e "s/__BUILD__/$BUILD_NUMBER/" macos/Info.plist > "$APP/Contents/Info.plist"
 printf 'APPL????' > "$APP/Contents/PkgInfo"
 
-echo "==> Icon"
-ICONSET="$WORK/AppIcon.iconset"
-mkdir -p "$ICONSET"
-qlmanage -t -s 1024 -o "$WORK" macos/AppIcon.svg >/dev/null 2>&1
-MASTER="$WORK/AppIcon.svg.png"
-[[ -f "$MASTER" ]] || { echo "icon render failed" >&2; exit 1; }
-for size in 16 32 128 256 512; do
-  sips -z $size $size "$MASTER" --out "$ICONSET/icon_${size}x${size}.png" >/dev/null
-  sips -z $((size * 2)) $((size * 2)) "$MASTER" --out "$ICONSET/icon_${size}x${size}@2x.png" >/dev/null
-done
-iconutil -c icns -o "$APP/Contents/Resources/AppIcon.icns" "$ICONSET"
+cp assets/icon/Fretwright.icns "$APP/Contents/Resources/AppIcon.icns"
 
 echo "==> Sign ($([[ "$IDENTITY" == "-" ]] && echo ad-hoc || echo "$IDENTITY"))"
 codesign --force --options runtime --timestamp=none --sign "$IDENTITY" "$APP"

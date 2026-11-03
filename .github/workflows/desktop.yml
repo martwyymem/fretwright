@@ -1,0 +1,175 @@
+# Builds and smoke-tests the desktop apps. On a tag push, attaches them to that GitHub release.
+name: Desktop apps
+
+on:
+  push:
+    branches: [main]
+    tags: ['*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npx tsc -b && npx vite build
+      - uses: actions/upload-artifact@v7
+        with:
+          name: web
+          path: dist
+
+  macos:
+    needs: web
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v8
+        with:
+          name: web
+          path: dist
+      - run: SKIP_WEB=1 bash macos/build-app.sh
+      - name: Self-test (load, autosave, SVG/DXF/PDF downloads)
+        run: |
+          T="$RUNNER_TEMP/selftest"; mkdir -p "$T/1" "$T/2"
+          FRETWRIGHT_SELFTEST="$T/1" timeout 90 build/Fretwright.app/Contents/MacOS/Fretwright
+          FRETWRIGHT_SELFTEST="$T/2" timeout 90 build/Fretwright.app/Contents/MacOS/Fretwright
+          node scripts/check-selftest.mjs "$T/1" "$T/2" "$T/2"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: macos
+          path: build/Fretwright-*-macOS.zip
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: selftest-macos
+          path: ${{ runner.temp }}/selftest
+
+  windows:
+    needs: web
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: windows/go.mod
+          cache-dependency-path: windows/go.sum
+      - uses: actions/download-artifact@v8
+        with:
+          name: web
+          path: dist
+      - run: SKIP_WEB=1 bash windows/build.sh
+      - name: Self-test (load, autosave, SVG/DXF/PDF downloads)
+        shell: pwsh
+        run: |
+          $t = Join-Path $env:RUNNER_TEMP 'selftest'
+          New-Item -ItemType Directory -Force "$t\1", "$t\2" | Out-Null
+          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          foreach ($run in 1, 2) {
+            $env:FRETWRIGHT_SELFTEST = "$t\$run"
+            $p = Start-Process -FilePath build\windows\Fretwright-x64.exe -PassThru
+            Start-Sleep -Seconds 5
+            $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+            $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+            [System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
+            $bmp.Save("$t\$run\screen.png")
+            if (-not $p.WaitForExit(90000)) { $p.Kill(); Write-Error "run $run timed out" }
+          }
+          New-Item -ItemType Directory -Force "$t\downloads" | Out-Null
+          Copy-Item "$env:USERPROFILE\Downloads\my-guitar-*" "$t\downloads\" -ErrorAction SilentlyContinue
+          node scripts/check-selftest.mjs "$t\1" "$t\2" "$t\downloads"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows
+          path: build/windows/Fretwright-*-windows-*.zip
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: selftest-windows
+          path: ${{ runner.temp }}/selftest
+
+  linux-selftest:
+    needs: web
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: web
+          path: dist
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 gir1.2-webkit-6.0 xvfb dbus-x11
+      - name: Self-test (load, autosave, SVG/DXF/PDF downloads)
+        env:
+          # CI only: the runner's AppArmor blocks WebKit's bubblewrap sandbox. The Flatpak keeps it.
+          WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS: '1'
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: |
+          T="$RUNNER_TEMP/selftest"; mkdir -p "$T/1" "$T/2"
+          for run in 1 2; do
+            FRETWRIGHT_SELFTEST="$T/$run" timeout 90 xvfb-run -a -s "-screen 0 1600x1000x24" dbus-run-session python3 linux/fretwright.py
+          done
+          node scripts/check-selftest.mjs "$T/1" "$T/2" "$T/2"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: selftest-linux
+          path: ${{ runner.temp }}/selftest
+
+  flatpak:
+    needs: web
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-51
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: web
+          path: dist
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: Fretwright.flatpak
+          manifest-path: linux/io.github.martwyymem.Fretwright.yml
+          cache-key: flatpak-builder-${{ github.sha }}
+          upload-artifact: false
+      - run: |
+          V=$(sed -n 's/^  "version": "\(.*\)",$/\1/p' package.json)
+          mkdir -p out && cp Fretwright.flatpak "out/Fretwright-$V-x86_64.flatpak"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: flatpak
+          path: out/*.flatpak
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [macos, windows, linux-selftest, flatpak]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: out
+      - name: Attach to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          ls -laR out
+          gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 || gh release create "$TAG" -R "$GITHUB_REPOSITORY" --prerelease --title "$TAG" --generate-notes
+          gh release upload "$TAG" out/macos/* out/windows/* out/flatpak/* -R "$GITHUB_REPOSITORY" --clobber

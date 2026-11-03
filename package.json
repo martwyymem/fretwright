@@ -12,7 +12,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc -b --noEmit",
-    "build:mac": "bash macos/build-app.sh"
+    "build:mac": "bash macos/build-app.sh",
+    "build:windows": "bash windows/build.sh",
+    "build:flatpak": "bash linux/build-flatpak.sh"
   },
   "dependencies": {
     "jspdf": "^4.2.1",
